@@ -104,9 +104,9 @@ export default function FrontChatbot() {
 
   const proposeContinue = () => {
     if (intent === 'report-repair') {
-      addMessage('assistant', 'Thanks, I can open the repair form with your details pre-filled. Tap “Open repair form”.')
+      addMessage('assistant', 'Thanks. Next, please open the repair form. When you have filled everything in, tap Submit and we will send the email to Customer Services on your behalf.')
     } else if (intent === 'moving-out') {
-      addMessage('assistant', 'Thanks, I can open a summary to send to the team. Tap “Open moving-out form”.')
+      addMessage('assistant', 'Thanks. Next, please open the moving-out form. When you complete it, tap Submit and we will send the email to Customer Services on your behalf.')
     } else {
       addMessage('assistant', `You can continue here or email us at ${email}.`)
     }
@@ -121,9 +121,9 @@ export default function FrontChatbot() {
       setAwaitingConfirm(false)
       if (ans === 'yes' || ans === 'y' || /correct|looks good|confirm/.test(ans)) {
         if (intent === 'report-repair') {
-          addMessage('assistant', 'Thanks for confirming. I will email this to Customer Services now. They will be in touch to make an appointment for an engineer.')
+          addMessage('assistant', 'Thanks for confirming. I will email this to Customer Services after you submit the form. They will be in touch to make an appointment for an engineer.')
         } else if (intent === 'moving-out') {
-          addMessage('assistant', 'Thanks for confirming. I will email this to Customer Services and they will be in touch to confirm next steps.')
+          addMessage('assistant', 'Thanks for confirming. I will email this to Customer Services after you submit the form and they will be in touch to confirm next steps.')
         } else {
           addMessage('assistant', 'Thanks for confirming. I will email this to Customer Services and they will get back to you.')
         }

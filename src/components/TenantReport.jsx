@@ -26,6 +26,11 @@ export default function TenantReport() {
   const [error, setError] = useState('')
   const [successId, setSuccessId] = useState('')
 
+  // Email submission state
+  const [emailSending, setEmailSending] = useState(false)
+  const [emailOk, setEmailOk] = useState('')
+  const [emailError, setEmailError] = useState('')
+
   // Read action from URL or prefill from chat (sessionStorage)
   useEffect(() => {
     const params = new URLSearchParams(window.location.search)
@@ -58,9 +63,10 @@ export default function TenantReport() {
       `Contact: ${contact || '-'}\n` +
       `Address: ${address || '-'}\n` +
       `Topic: ${intent}\n` +
-      `Details: ${matter || '-'}\n`
+      `Details: ${matter || '-'}\n` +
+      (intent === 'report-repair' ? `Priority: ${priority}\n` : '')
     )
-  }, [name, contact, address, intent, matter])
+  }, [name, contact, address, intent, matter, priority])
 
   const copySummary = async () => {
     try {
@@ -106,12 +112,41 @@ export default function TenantReport() {
       if (!res.ok) throw new Error('Failed to submit')
       const data = await res.json()
       setSuccessId(data.id)
-      resetForm()
+      // Do not fully reset yet; we want address/name present for follow-up email
+      setMatter('')
+      setPhoto(null)
     } catch (err) {
       console.error(err)
       setError('Could not submit your repair request. Please try again.')
     } finally {
       setSubmitting(false)
+    }
+  }
+
+  const submitEmail = async () => {
+    setEmailOk('')
+    setEmailError('')
+    // basic checks
+    if (!name || !contact || !address || !matter) {
+      setEmailError('Please complete name, contact, address and details before submitting.')
+      return
+    }
+    try {
+      setEmailSending(true)
+      const res = await fetch(`${API}/api/tenant/send_email`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ intent, name, contact, address, details: matter, priority })
+      })
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}))
+        throw new Error(err.detail || 'Failed to send')
+      }
+      setEmailOk('Sent to Customer Services. We will be in touch shortly.')
+    } catch (e) {
+      setEmailError(e.message || 'Could not send your message. If this address is not in our system, it may not be a managed property.')
+    } finally {
+      setEmailSending(false)
     }
   }
 
@@ -152,6 +187,7 @@ export default function TenantReport() {
             <div>
               <label className="block text-sm text-slate-700 mb-1">Your address</label>
               <input className={`w-full ${inputBase}`} value={address} onChange={e=>setAddress(e.target.value)} placeholder="Flat/House, Street, Postcode" />
+              <p className="text-xs text-slate-500 mt-1">We will check this against our managed properties before sending.</p>
             </div>
             <div>
               <label className="block text-sm text-slate-700 mb-1">Tell us about it</label>
@@ -183,23 +219,41 @@ export default function TenantReport() {
             )}
 
             {successId && (
-              <div className="text-sm text-green-800 bg-green-50 border border-green-200 rounded-md px-3 py-2">Thanks – your reference is {successId}.</div>
+              <div className="text-sm text-green-800 bg-green-50 border border-green-200 rounded-md px-3 py-2">Thanks – your repair has been logged. Reference: {successId}. You can now send a confirmation email to Customer Services.</div>
             )}
             {error && (
               <div className="text-sm text-red-700 bg-red-50 border border-red-200 rounded-md px-3 py-2">{error}</div>
             )}
 
-            <div className="flex justify-end gap-2">
+            <div className="flex flex-wrap gap-2 justify-end">
               {intent === 'report-repair' ? (
-                <button onClick={submitRepair} disabled={submitting} className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-md disabled:opacity-50 focus:outline-none focus:ring-2 focus:ring-blue-400">
-                  {submitting ? 'Submitting…' : 'Submit repair'}
-                </button>
+                <>
+                  <button onClick={submitRepair} disabled={submitting} className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-md disabled:opacity-50 focus:outline-none focus:ring-2 focus:ring-blue-400">
+                    {submitting ? 'Submitting…' : 'Submit repair'}
+                  </button>
+                  {successId && (
+                    <button onClick={submitEmail} disabled={emailSending} className="bg-emerald-600 hover:bg-emerald-700 text-white px-4 py-2 rounded-md disabled:opacity-50 focus:outline-none focus:ring-2 focus:ring-emerald-400">
+                      {emailSending ? 'Sending…' : 'Send confirmation email'}
+                    </button>
+                  )}
+                </>
               ) : (
-                <button onClick={copySummary} className="bg-slate-800 hover:bg-slate-700 text-white px-4 py-2 rounded-md focus:outline-none focus:ring-2 focus:ring-slate-400">
-                  Copy summary
-                </button>
+                <>
+                  <button onClick={submitEmail} disabled={emailSending} className="bg-emerald-600 hover:bg-emerald-700 text-white px-4 py-2 rounded-md disabled:opacity-50 focus:outline-none focus:ring-2 focus:ring-emerald-400">
+                    {emailSending ? 'Sending…' : 'Submit now'}
+                  </button>
+                  <button onClick={copySummary} className="bg-slate-800 hover:bg-slate-700 text-white px-4 py-2 rounded-md focus:outline-none focus:ring-2 focus:ring-slate-400">
+                    Copy summary
+                  </button>
+                </>
               )}
             </div>
+
+            {(emailOk || emailError) && (
+              <div className={`text-sm rounded-md px-3 py-2 border ${emailOk ? 'text-green-800 bg-green-50 border-green-200' : 'text-red-700 bg-red-50 border-red-200'}`}>
+                {emailOk || emailError}
+              </div>
+            )}
           </div>
         </div>
 
@@ -209,17 +263,17 @@ export default function TenantReport() {
             <ul className="text-sm text-slate-300 space-y-2 list-disc pl-5">
               <li>We'll log your repair and assign the right operative.</li>
               <li>Use the token from your magic link so we can verify your address.</li>
-              <li>You can attach a photo to help us triage.</li>
+              <li>After submitting the repair, send the confirmation email so Customer Services can arrange an appointment.</li>
             </ul>
           ) : intent === 'moving-out' ? (
             <ul className="text-sm text-slate-300 space-y-2 list-disc pl-5">
               <li>Share your intended move-out date and any questions.</li>
-              <li>Copy your summary and send it to us via email or chat.</li>
+              <li>When you submit, we will email this to Customer Services on your behalf.</li>
             </ul>
           ) : (
             <ul className="text-sm text-slate-300 space-y-2 list-disc pl-5">
               <li>Tell us what you'd like to discuss.</li>
-              <li>Copy your summary and we'll get back to you.</li>
+              <li>When you submit, we will email this to Customer Services on your behalf.</li>
             </ul>
           )}
           {intent !== 'report-repair' && (
