@@ -1,5 +1,5 @@
+import { Link } from 'react-router-dom'
 import Hero from './components/Hero'
-import QuickAdd from './components/QuickAdd'
 import Dashboard from './components/Dashboard'
 
 function App() {
@@ -7,13 +7,29 @@ function App() {
     <div className="min-h-screen bg-gradient-to-b from-slate-900 via-slate-950 to-slate-900 text-slate-100">
       <Hero />
 
-      <main className="-mt-10 relative z-30">
+      <main className="-mt-10 relative z-30 space-y-6">
         <div className="max-w-7xl mx-auto px-6 lg:px-8">
-          <div className="bg-slate-900/60 backdrop-blur border border-slate-800 rounded-2xl p-5 shadow-xl">
-            <h2 className="text-xl font-semibold mb-3">Quick Add</h2>
-            <QuickAdd onCreated={() => { /* Reload triggered by dashboard */ }} />
+          <div className="bg-slate-900/60 backdrop-blur border border-slate-800 rounded-2xl p-6 shadow-xl">
+            <h2 className="text-xl font-semibold mb-4">Get Started</h2>
+            <p className="text-slate-300 mb-5">Choose your role to continue.</p>
+            <div className="flex flex-col sm:flex-row gap-3">
+              <Link
+                to="/tenant"
+                className="inline-flex items-center justify-center rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white px-4 py-2.5 font-medium shadow transition-colors focus:outline-none focus:ring-2 focus:ring-emerald-400 focus:ring-offset-2 focus:ring-offset-slate-900"
+              >
+                Tenant
+              </Link>
+              <Link
+                to="/operative"
+                className="inline-flex items-center justify-center rounded-lg bg-indigo-600 hover:bg-indigo-500 text-white px-4 py-2.5 font-medium shadow transition-colors focus:outline-none focus:ring-2 focus:ring-indigo-400 focus:ring-offset-2 focus:ring-offset-slate-900"
+              >
+                Operative
+              </Link>
+            </div>
+            <p className="text-xs text-slate-400 mt-3">Admin-only quick adds are now handled in the backend.</p>
           </div>
         </div>
+
         <Dashboard />
       </main>
 
