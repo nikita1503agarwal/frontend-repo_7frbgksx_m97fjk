@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from 'react'
+import OperativeLogin from './OperativeLogin'
 
 const API = import.meta.env.VITE_BACKEND_URL || 'http://localhost:8000'
 
@@ -68,7 +69,6 @@ export default function OperativePortal() {
       const params = new URLSearchParams()
       if (operativeId) params.set('operative_id', operativeId)
       // Show both new and in_progress assigned to this operative
-      // If backend supports multiple statuses, we can call twice and merge
       const urlBase = `${API}/api/workorders`
 
       let list = []
@@ -124,21 +124,20 @@ export default function OperativePortal() {
         headers: { 'Content-Type': 'application/json', ...headers },
         body: JSON.stringify({ workorder_id: id, location, notes: note || undefined })
       })
-      if (!res.ok) throw new Error('Complete failed')
-      setNote('')
-      await fetchJobs()
     } catch (e) {
       alert('Could not complete job')
+      return
     }
+    setNote('')
+    await fetchJobs()
   }
 
   if (!token) {
-    const onAuthed = (t) => {
+    const onAuthed = () => {
       // token and operative details were saved during login
       fetchJobs()
     }
-    const Lazy = require('./OperativeLogin').default
-    return <Lazy onAuthed={onAuthed} />
+    return <OperativeLogin onAuthed={onAuthed} />
   }
 
   return (
