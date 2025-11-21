@@ -1,8 +1,33 @@
+import { useState } from 'react'
 import Spline from '@splinetool/react-spline'
 
 export default function Hero() {
+  const [logoError, setLogoError] = useState(false)
+
   return (
     <section className="relative h-[60vh] w-full overflow-hidden">
+      {/* Brand bar */}
+      <div className="absolute top-0 left-0 right-0 z-30">
+        <div className="max-w-7xl mx-auto px-6 lg:px-8 py-4 flex items-center gap-3">
+          {!logoError ? (
+            <img
+              src="/logo.png"
+              alt="Glenroe Living Limited"
+              className="h-9 w-auto rounded-md shadow ring-1 ring-white/10 bg-white"
+              onError={() => setLogoError(true)}
+            />
+          ) : (
+            <div className="h-9 w-9 rounded-md bg-emerald-600 text-white flex items-center justify-center font-semibold tracking-wide">
+              GL
+            </div>
+          )}
+          <div className="text-white/95">
+            <div className="text-base sm:text-lg font-semibold">Glenroe Living Limited</div>
+            <div className="text-xs sm:text-sm text-white/70">Property Asset Management</div>
+          </div>
+        </div>
+      </div>
+
       <div className="absolute inset-0">
         <Spline scene="https://prod.spline.design/1VHYoewWfi45VYZ5/scene.splinecode" style={{ width: '100%', height: '100%' }} />
       </div>
