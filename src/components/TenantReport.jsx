@@ -118,7 +118,7 @@ export default function TenantReport() {
             </button>
           ))}
         </div>
-        <p className="text-slate-300 mt-3 text-sm">Well ask a few quick questions to help us help you.</p>
+        <p className="text-slate-300 mt-3 text-sm">We'll ask a few quick questions to help us help you.</p>
       </div>
 
       <div className="grid md:grid-cols-3 gap-6 items-start">
@@ -190,7 +190,7 @@ export default function TenantReport() {
           <h4 className="font-semibold mb-2">What happens next?</h4>
           {intent === 'report-repair' ? (
             <ul className="text-sm text-slate-300 space-y-2 list-disc pl-5">
-              <li>Well log your repair and assign the right operative.</li>
+              <li>We'll log your repair and assign the right operative.</li>
               <li>Use the token from your magic link so we can verify your address.</li>
               <li>You can attach a photo to help us triage.</li>
             </ul>
@@ -201,8 +201,8 @@ export default function TenantReport() {
             </ul>
           ) : (
             <ul className="text-sm text-slate-300 space-y-2 list-disc pl-5">
-              <li>Tell us what youd like to discuss.</li>
-              <li>Copy your summary and well get back to you.</li>
+              <li>Tell us what you'd like to discuss.</li>
+              <li>Copy your summary and we'll get back to you.</li>
             </ul>
           )}
           {intent !== 'report-repair' && (

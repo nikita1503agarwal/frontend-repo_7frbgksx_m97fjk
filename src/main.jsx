@@ -4,7 +4,6 @@ import { BrowserRouter, Routes, Route } from 'react-router-dom'
 import App from './App'
 import Test from './Test'
 import TenantReport from './components/TenantReport'
-import OperativeWork from './components/OperativeWork'
 import PropertyIssues from './components/PropertyIssues'
 import './index.css'
 
@@ -15,7 +14,6 @@ ReactDOM.createRoot(document.getElementById('root')).render(
         <Route path="/" element={<App />} />
         <Route path="/test" element={<Test />} />
         <Route path="/tenant" element={<TenantReport />} />
-        <Route path="/operative" element={<OperativeWork />} />
         <Route path="/property/:id/issues" element={<PropertyIssues />} />
       </Routes>
     </BrowserRouter>

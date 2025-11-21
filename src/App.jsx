@@ -38,18 +38,8 @@ function App() {
               </Link>
             </div>
 
-            <div className="mt-6 border-t border-slate-800 pt-6">
-              <h3 className="text-sm uppercase tracking-wide text-slate-400 mb-3">Staff</h3>
-              <div className="flex flex-col sm:flex-row gap-3">
-                <Link
-                  to="/operative"
-                  className="inline-flex items-center justify-center rounded-lg bg-indigo-600 hover:bg-indigo-500 text-white px-4 py-2.5 font-medium shadow transition-colors focus:outline-none focus:ring-2 focus:ring-indigo-400 focus:ring-offset-2 focus:ring-offset-slate-900"
-                >
-                  Operative work logging
-                </Link>
-              </div>
-            </div>
-            <p className="text-xs text-slate-400 mt-3">For tenant enquiries, email customerservices@glenroe.co.uk</p>
+            {/* No operative tab on this front end */}
+            <p className="text-xs text-slate-400 mt-6">For tenant enquiries, email customerservices@glenroe.co.uk</p>
           </div>
         </div>
 
