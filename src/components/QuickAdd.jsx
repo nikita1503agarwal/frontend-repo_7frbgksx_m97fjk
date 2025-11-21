@@ -74,17 +74,17 @@ export default function QuickAdd({ onCreated }) {
       </div>
       <div>
         <label className="block text-sm font-medium text-slate-800 mb-1">Property</label>
-        <div className="flex flex-col sm:flex-row gap-2">
-          <input value={form.property.address_line1} onChange={e=>update('property','address_line1',e.target.value)} className={`flex-1 ${inputBase}`} placeholder="Address line 1" />
-          <input value={form.property.city} onChange={e=>update('property','city',e.target.value)} className={`sm:w-32 ${inputBase}`} placeholder="City" />
-          <input value={form.property.postcode} onChange={e=>update('property','postcode',e.target.value)} className={`sm:w-28 ${inputBase}`} placeholder="Postcode" />
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
+          <input value={form.property.address_line1} onChange={e=>update('property','address_line1',e.target.value)} className={`w-full ${inputBase}`} placeholder="Address line 1" />
+          <input value={form.property.city} onChange={e=>update('property','city',e.target.value)} className={`w-full ${inputBase}`} placeholder="City" />
+          <input value={form.property.postcode} onChange={e=>update('property','postcode',e.target.value)} className={`w-full ${inputBase}`} placeholder="Postcode" />
         </div>
       </div>
       <div>
         <label className="block text-sm font-medium text-slate-800 mb-1">Work</label>
-        <div className="flex flex-col sm:flex-row gap-2">
-          <input value={form.work.title} onChange={e=>update('work','title',e.target.value)} className={`flex-1 ${inputBase}`} placeholder="Title (optional)" />
-          <select value={form.work.category} onChange={e=>update('work','category',e.target.value)} className={`sm:w-40 ${selectBase}`}>
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+          <input value={form.work.title} onChange={e=>update('work','title',e.target.value)} className={`w-full ${inputBase}`} placeholder="Title (optional)" />
+          <select value={form.work.category} onChange={e=>update('work','category',e.target.value)} className={`w-full ${selectBase}`}>
             <option value="maintenance">Maintenance</option>
             <option value="repair">Repair</option>
             <option value="compliance">Compliance</option>
