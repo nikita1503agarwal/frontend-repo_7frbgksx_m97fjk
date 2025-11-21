@@ -1,15 +1,24 @@
-import { useMemo, useRef, useState } from 'react'
+import { useMemo, useRef, useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 
-// Simple, client-side helper chatbot for tenants on the front page.
-// Guides users to the right flow and offers email handoff.
+// Conversational assistant for tenants. Guides with follow-up questions
+// and can prefill the tenant form.
 export default function FrontChatbot() {
   const navigate = useNavigate()
   const [messages, setMessages] = useState([
-    { role: 'assistant', text: 'Hi, how can we help today? You can report a repair, tell us you\'re moving out, or ask something else.' },
+    { role: 'assistant', text: "Hi, I can help with repairs, moving out, or general questions. What do you need today?" },
   ])
   const [input, setInput] = useState('')
   const endRef = useRef(null)
+
+  const [intent, setIntent] = useState('') // 'report-repair' | 'moving-out' | 'other'
+  const [prefill, setPrefill] = useState({
+    name: '',
+    contact: '',
+    address: '',
+    details: '',
+    priority: '', // low | medium | high | urgent
+  })
 
   const email = 'customerservices@glenroe.co.uk'
 
@@ -22,23 +31,154 @@ export default function FrontChatbot() {
     setTimeout(scrollToEnd, 10)
   }
 
-  const quickReply = (key) => {
-    if (key === 'report-repair') {
-      addMessage('user', 'Report a repair')
-      addMessage('assistant', 'Great. I can guide you to our repair form. If you\'ve received a magic link, have it handy to auto-fill your token.')
-    } else if (key === 'moving-out') {
-      addMessage('user', 'Moving out')
-      addMessage('assistant', 'Thanks for letting us know. We\'ll ask a couple of questions to get this started.')
+  const setAndAsk = (updates, nextQuestion) => {
+    setPrefill(prev => ({ ...prev, ...updates }))
+    if (nextQuestion) addMessage('assistant', nextQuestion)
+  }
+
+  const detectIntent = (text) => {
+    const t = text.toLowerCase()
+    if (t.includes('repair') || t.includes('fix') || t.includes('broken') || t.includes('leak') || t.includes('heating')) return 'report-repair'
+    if (t.includes('move') || t.includes('moving') || t.includes('leave') || t.includes('notice')) return 'moving-out'
+    return 'other'
+  }
+
+  const detectPriority = (text) => {
+    const t = text.toLowerCase()
+    if (/(danger|gas|carbon|monoxide|sparks|fire|flood|burst)/.test(t)) return 'urgent'
+    if (/(leak|no heat|no heating|no hot water|electrics)/.test(t)) return 'high'
+    if (/(soon|asap|priority)/.test(t)) return 'high'
+    return ''
+  }
+
+  const nextRepairQuestion = (state) => {
+    if (!state.address) return 'What is the property address?'
+    if (!state.details) return 'Please describe the issue (what happened, where, and since when).'
+    if (!state.priority) return 'How urgent is it? (urgent, high, medium, or low)'
+    if (!state.name) return 'What is your name?'
+    if (!state.contact) return 'What is the best way to contact you (phone or email)?'
+    return ''
+  }
+
+  const nextMoveOutQuestion = (state) => {
+    if (!state.name) return 'What is your name?'
+    if (!state.contact) return 'What is the best way to contact you (phone or email)?'
+    if (!state.address) return 'What is the property address?'
+    if (!state.details) return 'Please share your intended move-out date and any details.'
+    return ''
+  }
+
+  const nextOtherQuestion = (state) => {
+    if (!state.name) return 'What is your name?'
+    if (!state.contact) return 'What is the best way to contact you (phone or email)?'
+    if (!state.details) return 'How can we help? Please share a few details.'
+    return ''
+  }
+
+  const proposeContinue = () => {
+    if (intent === 'report-repair') {
+      addMessage('assistant', 'Thanks, I can open the repair form with your details pre-filled. Tap “Open repair form”.')
+    } else if (intent === 'moving-out') {
+      addMessage('assistant', 'Thanks, I can open a summary to send to the team. Tap “Open moving-out form”.')
     } else {
-      addMessage('user', 'Other')
-      addMessage('assistant', 'No problem. You can send us a quick note here, or email us and we\'ll get back to you.')
+      addMessage('assistant', `You can continue here or email us at ${email}.`)
     }
   }
 
-  const startFlow = (key) => {
-    if (key === 'report-repair') navigate('/tenant?action=report-repair')
-    if (key === 'moving-out') navigate('/tenant?action=moving-out')
-    if (key === 'other') navigate('/tenant?action=other')
+  const handleUserText = (text) => {
+    // If intent is unknown, detect and ask the next question
+    if (!intent) {
+      const i = detectIntent(text)
+      setIntent(i)
+      if (i === 'report-repair') {
+        addMessage('assistant', 'Great — a repair. I will ask a few quick questions to help triage.')
+        const nq = nextRepairQuestion(prefill)
+        if (nq) addMessage('assistant', nq)
+      } else if (i === 'moving-out') {
+        addMessage('assistant', 'Okay — moving out. I will ask a couple of things to notify the team.')
+        const nq = nextMoveOutQuestion(prefill)
+        if (nq) addMessage('assistant', nq)
+      } else {
+        addMessage('assistant', 'No problem. I can take a short note and pass it on.')
+        const nq = nextOtherQuestion(prefill)
+        if (nq) addMessage('assistant', nq)
+      }
+      return
+    }
+
+    // If intent is set, fill fields progressively in order of the next question
+    const t = text.trim()
+    if (intent === 'report-repair') {
+      if (!prefill.address) return setAndAsk({ address: t }, nextRepairQuestion({ ...prefill, address: t }))
+      if (!prefill.details) {
+        const pr = detectPriority(t) || prefill.priority
+        return setAndAsk({ details: t, priority: pr }, nextRepairQuestion({ ...prefill, details: t, priority: pr }))
+      }
+      if (!prefill.priority) {
+        const pr = (/urgent|emergency/.test(t.toLowerCase()) ? 'urgent' : (/high/.test(t.toLowerCase()) ? 'high' : (/low/.test(t.toLowerCase()) ? 'low' : 'medium')))
+        return setAndAsk({ priority: pr }, nextRepairQuestion({ ...prefill, priority: pr }))
+      }
+      if (!prefill.name) return setAndAsk({ name: t }, nextRepairQuestion({ ...prefill, name: t }))
+      if (!prefill.contact) return setAndAsk({ contact: t }, '')
+      proposeContinue()
+      return
+    }
+
+    if (intent === 'moving-out') {
+      if (!prefill.name) return setAndAsk({ name: t }, nextMoveOutQuestion({ ...prefill, name: t }))
+      if (!prefill.contact) return setAndAsk({ contact: t }, nextMoveOutQuestion({ ...prefill, contact: t }))
+      if (!prefill.address) return setAndAsk({ address: t }, nextMoveOutQuestion({ ...prefill, address: t }))
+      if (!prefill.details) return setAndAsk({ details: t }, '')
+      proposeContinue()
+      return
+    }
+
+    if (intent === 'other') {
+      if (!prefill.name) return setAndAsk({ name: t }, nextOtherQuestion({ ...prefill, name: t }))
+      if (!prefill.contact) return setAndAsk({ contact: t }, nextOtherQuestion({ ...prefill, contact: t }))
+      if (!prefill.details) return setAndAsk({ details: t }, '')
+      proposeContinue()
+      return
+    }
+  }
+
+  const send = (e) => {
+    e?.preventDefault()
+    const text = input.trim()
+    if (!text) return
+    addMessage('user', text)
+    setInput('')
+    handleUserText(text)
+  }
+
+  const quickReply = (key) => {
+    if (key === 'report-repair') {
+      setIntent('report-repair')
+      addMessage('user', 'Report a repair')
+      addMessage('assistant', 'Great — I will ask a few questions.')
+      addMessage('assistant', nextRepairQuestion(prefill))
+    } else if (key === 'moving-out') {
+      setIntent('moving-out')
+      addMessage('user', 'Moving out')
+      addMessage('assistant', 'Okay — a couple of quick questions.')
+      addMessage('assistant', nextMoveOutQuestion(prefill))
+    } else {
+      setIntent('other')
+      addMessage('user', 'Other')
+      addMessage('assistant', 'Sure — what would you like to discuss?')
+      const nq = nextOtherQuestion(prefill)
+      if (nq) addMessage('assistant', nq)
+    }
+  }
+
+  const openPrefilled = (target) => {
+    // Save prefill so the form can read it
+    try {
+      sessionStorage.setItem('tenant_prefill', JSON.stringify({ ...prefill, intent }))
+    } catch {}
+    if (target === 'repair') navigate('/tenant?action=report-repair')
+    if (target === 'moving') navigate('/tenant?action=moving-out')
+    if (target === 'other') navigate('/tenant?action=other')
   }
 
   const mailtoHref = useMemo(() => {
@@ -49,22 +189,9 @@ export default function FrontChatbot() {
     return `mailto:${email}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`
   }, [messages])
 
-  const send = (e) => {
-    e?.preventDefault()
-    const text = input.trim()
-    if (!text) return
-    addMessage('user', text)
-    setInput('')
-    // Lightweight keyword routing for convenience
-    const t = text.toLowerCase()
-    if (t.includes('repair') || t.includes('fix') || t.includes('broken')) {
-      addMessage('assistant', 'It sounds like a repair. Tap “Start repair report” below to continue.')
-    } else if (t.includes('move') || t.includes('leaving') || t.includes('notice')) {
-      addMessage('assistant', 'Got it — moving out. Tap “Start moving out” to continue.')
-    } else {
-      addMessage('assistant', 'Thanks. You can continue here, or email us and we\'ll follow up.')
-    }
-  }
+  const readyForRepair = intent === 'report-repair' && prefill.address && prefill.details && prefill.priority && prefill.name && prefill.contact
+  const readyForMoving = intent === 'moving-out' && prefill.name && prefill.contact && prefill.address && prefill.details
+  const readyForOther = intent === 'other' && prefill.name && prefill.contact && prefill.details
 
   return (
     <div className="bg-slate-900/60 backdrop-blur border border-slate-800 rounded-2xl p-4 sm:p-5 shadow-xl">
@@ -103,9 +230,9 @@ export default function FrontChatbot() {
       </form>
 
       <div className="mt-3 grid grid-cols-1 sm:grid-cols-3 gap-2">
-        <button onClick={() => startFlow('report-repair')} className="bg-emerald-700 hover:bg-emerald-600 text-white px-3 py-2 rounded-md">Start repair report</button>
-        <button onClick={() => startFlow('moving-out')} className="bg-amber-700 hover:bg-amber-600 text-white px-3 py-2 rounded-md">Start moving out</button>
-        <button onClick={() => startFlow('other')} className="bg-sky-700 hover:bg-sky-600 text-white px-3 py-2 rounded-md">Ask about something else</button>
+        <button onClick={() => openPrefilled('repair')} disabled={!readyForRepair} className={`px-3 py-2 rounded-md ${readyForRepair ? 'bg-emerald-700 hover:bg-emerald-600 text-white' : 'bg-slate-700 text-slate-300 cursor-not-allowed'}`}>Open repair form</button>
+        <button onClick={() => openPrefilled('moving')} disabled={!readyForMoving} className={`px-3 py-2 rounded-md ${readyForMoving ? 'bg-amber-700 hover:bg-amber-600 text-white' : 'bg-slate-700 text-slate-300 cursor-not-allowed'}`}>Open moving-out form</button>
+        <button onClick={() => openPrefilled('other')} disabled={!readyForOther} className={`px-3 py-2 rounded-md ${readyForOther ? 'bg-sky-700 hover:bg-sky-600 text-white' : 'bg-slate-700 text-slate-300 cursor-not-allowed'}`}>Open general form</button>
       </div>
     </div>
   )

@@ -18,7 +18,17 @@ export default function OperativeLogin({ onAuthed }) {
       })
       if (!res.ok) throw new Error('Login failed')
       const data = await res.json()
-      localStorage.setItem('operative_token', data.token)
+      if (data?.token) {
+        localStorage.setItem('operative_token', data.token)
+      }
+      if (data?.operative_id) {
+        localStorage.setItem('operative_id', data.operative_id)
+      }
+      if (data?.email) {
+        localStorage.setItem('operative_email', data.email)
+      } else {
+        localStorage.setItem('operative_email', email)
+      }
       onAuthed?.(data.token)
     } catch (err) {
       console.error(err)

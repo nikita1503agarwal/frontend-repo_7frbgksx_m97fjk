@@ -4,8 +4,9 @@ const API = import.meta.env.VITE_BACKEND_URL || 'http://localhost:8000'
 
 function useOperativeAuth() {
   const [token, setToken] = useState(() => localStorage.getItem('operative_token') || '')
+  const [operativeId, setOperativeId] = useState(() => localStorage.getItem('operative_id') || '')
   const headers = useMemo(() => token ? { 'X-Operative-Token': token } : {}, [token])
-  return { token, setToken, headers }
+  return { token, setToken, operativeId, setOperativeId, headers }
 }
 
 function useGeo() {
@@ -38,7 +39,7 @@ function JobCard({ job, onStart, onComplete, starting, completing }) {
           <h4 className="text-lg font-semibold text-white">{job.title}</h4>
         </div>
         <span className={`text-xs px-2 py-1 rounded-full ${completed ? 'bg-emerald-800 text-emerald-100' : started ? 'bg-amber-800 text-amber-100' : 'bg-slate-700 text-slate-100'}`}>
-          {job.status.replace('_',' ')}
+          {job.status?.replace('_',' ') || 'new'}
         </span>
       </div>
       {job.description && <p className="mt-2 text-slate-300 text-sm">{job.description}</p>}
@@ -55,7 +56,7 @@ function JobCard({ job, onStart, onComplete, starting, completing }) {
 }
 
 export default function OperativePortal() {
-  const { token, setToken, headers } = useOperativeAuth()
+  const { token, setToken, operativeId, headers } = useOperativeAuth()
   const [jobs, setJobs] = useState([])
   const [loading, setLoading] = useState(false)
   const [note, setNote] = useState('')
@@ -64,9 +65,33 @@ export default function OperativePortal() {
   const fetchJobs = async () => {
     setLoading(true)
     try {
-      const res = await fetch(`${API}/api/workorders?status=new`)
-      const data = await res.json()
-      setJobs(Array.isArray(data) ? data : [])
+      const params = new URLSearchParams()
+      if (operativeId) params.set('operative_id', operativeId)
+      // Show both new and in_progress assigned to this operative
+      // If backend supports multiple statuses, we can call twice and merge
+      const urlBase = `${API}/api/workorders`
+
+      let list = []
+      // First: in_progress for you
+      {
+        const p = new URLSearchParams(params)
+        p.set('status', 'in_progress')
+        const res = await fetch(`${urlBase}?${p.toString()}`)
+        const data = await res.json()
+        if (Array.isArray(data)) list = list.concat(data)
+      }
+      // Second: new but assigned to you
+      {
+        const p = new URLSearchParams(params)
+        p.set('status', 'new')
+        const res = await fetch(`${urlBase}?${p.toString()}`)
+        const data = await res.json()
+        if (Array.isArray(data)) list = list.concat(data)
+      }
+      // Deduplicate by id
+      const byId = new Map()
+      list.forEach(w => byId.set(w.id || w._id, w))
+      setJobs(Array.from(byId.values()))
     } catch (e) {
       console.error(e)
     } finally {
@@ -74,7 +99,7 @@ export default function OperativePortal() {
     }
   }
 
-  useEffect(() => { fetchJobs() }, [])
+  useEffect(() => { fetchJobs() }, [operativeId])
 
   const startJob = async (id) => {
     const location = geo.coords ? { lat: geo.coords.lat, lng: geo.coords.lng } : undefined
@@ -108,7 +133,10 @@ export default function OperativePortal() {
   }
 
   if (!token) {
-    const onAuthed = (t) => setToken(t)
+    const onAuthed = (t) => {
+      // token and operative details were saved during login
+      fetchJobs()
+    }
     const Lazy = require('./OperativeLogin').default
     return <Lazy onAuthed={onAuthed} />
   }
@@ -116,10 +144,10 @@ export default function OperativePortal() {
   return (
     <section className="max-w-5xl mx-auto px-6 lg:px-8 py-8">
       <div className="flex items-center justify-between mb-4">
-        <h2 className="text-2xl font-semibold text-white">Operative jobs</h2>
+        <h2 className="text-2xl font-semibold text-white">Your jobs</h2>
         <div className="flex items-center gap-2">
           <button onClick={geo.request} className="bg-slate-700 hover:bg-slate-600 text-white px-3 py-1.5 rounded-md text-sm">Share location</button>
-          <button onClick={() => { localStorage.removeItem('operative_token'); setToken('') }} className="bg-slate-700 hover:bg-slate-600 text-white px-3 py-1.5 rounded-md text-sm">Sign out</button>
+          <button onClick={() => { localStorage.removeItem('operative_token'); localStorage.removeItem('operative_id'); localStorage.removeItem('operative_email'); window.location.reload() }} className="bg-slate-700 hover:bg-slate-600 text-white px-3 py-1.5 rounded-md text-sm">Sign out</button>
         </div>
       </div>
 
@@ -132,7 +160,7 @@ export default function OperativePortal() {
         {loading ? (
           <p className="text-slate-300">Loading jobs…</p>
         ) : jobs.length === 0 ? (
-          <p className="text-slate-400">No jobs available right now.</p>
+          <p className="text-slate-400">No assigned jobs right now.</p>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             {jobs.map(job => (

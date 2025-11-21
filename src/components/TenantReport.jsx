@@ -26,12 +26,29 @@ export default function TenantReport() {
   const [error, setError] = useState('')
   const [successId, setSuccessId] = useState('')
 
-  // Read action from URL (e.g., /tenant?action=moving-out or magic-link /tenant?token=...)
+  // Read action from URL or prefill from chat (sessionStorage)
   useEffect(() => {
     const params = new URLSearchParams(window.location.search)
     const actionParam = params.get('action')
-    if (actionParam && intents.find(i => i.key === actionParam)) setIntent(actionParam)
     const t = params.get('token')
+
+    // Prefill from chat assistant if available
+    try {
+      const raw = sessionStorage.getItem('tenant_prefill')
+      if (raw) {
+        const p = JSON.parse(raw)
+        if (p.intent && intents.find(i => i.key === p.intent)) setIntent(p.intent)
+        if (p.name) setName(p.name)
+        if (p.contact) setContact(p.contact)
+        if (p.address) setAddress(p.address)
+        if (p.details) setMatter(p.details)
+        if (p.priority) setPriority(p.priority)
+        // Clear after applying so it doesn't override later entries
+        sessionStorage.removeItem('tenant_prefill')
+      }
+    } catch {}
+
+    if (actionParam && intents.find(i => i.key === actionParam)) setIntent(prev => prev || actionParam)
     if (t) setToken(t)
   }, [])
 
