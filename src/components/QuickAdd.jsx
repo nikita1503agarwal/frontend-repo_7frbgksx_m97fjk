@@ -63,25 +63,28 @@ export default function QuickAdd({ onCreated }) {
     setForm(prev => ({ ...prev, [section]: { ...prev[section], [key]: value } }))
   }
 
+  const inputBase = 'bg-white text-slate-900 placeholder-slate-500 text-[15px] leading-6 px-3 py-2 rounded-md border border-slate-300 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500'
+  const selectBase = 'bg-white text-slate-900 text-[15px] leading-6 px-3 py-2 rounded-md border border-slate-300 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500'
+
   return (
-    <form onSubmit={create} className="bg-white/80 backdrop-blur rounded-xl shadow-sm border border-slate-200 p-4 grid grid-cols-1 md:grid-cols-4 gap-3">
+    <form onSubmit={create} className="bg-white/85 backdrop-blur rounded-xl shadow-sm border border-slate-200 p-4 grid grid-cols-1 md:grid-cols-4 gap-3">
       <div>
-        <label className="block text-sm font-medium text-slate-700 mb-1">Landlord</label>
-        <input value={form.landlord.name} onChange={e=>update('landlord','name',e.target.value)} className="w-full rounded-md border-slate-300 focus:ring-2 focus:ring-blue-500" placeholder="Name (optional)" />
+        <label className="block text-sm font-medium text-slate-800 mb-1">Landlord</label>
+        <input value={form.landlord.name} onChange={e=>update('landlord','name',e.target.value)} className={`w-full ${inputBase}`} placeholder="Name (optional)" />
       </div>
       <div>
-        <label className="block text-sm font-medium text-slate-700 mb-1">Property</label>
-        <div className="flex gap-2">
-          <input value={form.property.address_line1} onChange={e=>update('property','address_line1',e.target.value)} className="flex-1 rounded-md border-slate-300" placeholder="Address line 1" />
-          <input value={form.property.city} onChange={e=>update('property','city',e.target.value)} className="w-32 rounded-md border-slate-300" placeholder="City" />
-          <input value={form.property.postcode} onChange={e=>update('property','postcode',e.target.value)} className="w-28 rounded-md border-slate-300" placeholder="Postcode" />
+        <label className="block text-sm font-medium text-slate-800 mb-1">Property</label>
+        <div className="flex flex-col sm:flex-row gap-2">
+          <input value={form.property.address_line1} onChange={e=>update('property','address_line1',e.target.value)} className={`flex-1 ${inputBase}`} placeholder="Address line 1" />
+          <input value={form.property.city} onChange={e=>update('property','city',e.target.value)} className={`sm:w-32 ${inputBase}`} placeholder="City" />
+          <input value={form.property.postcode} onChange={e=>update('property','postcode',e.target.value)} className={`sm:w-28 ${inputBase}`} placeholder="Postcode" />
         </div>
       </div>
       <div>
-        <label className="block text-sm font-medium text-slate-700 mb-1">Work</label>
-        <div className="flex gap-2">
-          <input value={form.work.title} onChange={e=>update('work','title',e.target.value)} className="flex-1 rounded-md border-slate-300" placeholder="Title (optional)" />
-          <select value={form.work.category} onChange={e=>update('work','category',e.target.value)} className="w-40 rounded-md border-slate-300">
+        <label className="block text-sm font-medium text-slate-800 mb-1">Work</label>
+        <div className="flex flex-col sm:flex-row gap-2">
+          <input value={form.work.title} onChange={e=>update('work','title',e.target.value)} className={`flex-1 ${inputBase}`} placeholder="Title (optional)" />
+          <select value={form.work.category} onChange={e=>update('work','category',e.target.value)} className={`sm:w-40 ${selectBase}`}>
             <option value="maintenance">Maintenance</option>
             <option value="repair">Repair</option>
             <option value="compliance">Compliance</option>
@@ -90,8 +93,8 @@ export default function QuickAdd({ onCreated }) {
         </div>
       </div>
       <div>
-        <label className="block text-sm font-medium text-slate-700 mb-1">Certificate</label>
-        <select value={form.certificate.type} onChange={e=>update('certificate','type',e.target.value)} className="w-full rounded-md border-slate-300">
+        <label className="block text-sm font-medium text-slate-800 mb-1">Certificate</label>
+        <select value={form.certificate.type} onChange={e=>update('certificate','type',e.target.value)} className={`w-full ${selectBase}`}>
           <option value="gas_safety">Gas Safety</option>
           <option value="eicr">EICR</option>
           <option value="epc">EPC</option>
