@@ -10,21 +10,38 @@ function App() {
       <main className="-mt-10 relative z-30 space-y-6">
         <div className="max-w-7xl mx-auto px-6 lg:px-8">
           <div className="bg-slate-900/60 backdrop-blur border border-slate-800 rounded-2xl p-6 shadow-xl">
-            <h2 className="text-xl font-semibold mb-4">Get Started</h2>
-            <p className="text-slate-300 mb-5">Choose your role to continue.</p>
-            <div className="flex flex-col sm:flex-row gap-3">
+            <h2 className="text-xl font-semibold mb-2">What would you like to do today?</h2>
+            <p className="text-slate-300 mb-5">Choose an option below.</p>
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
               <Link
-                to="/tenant"
+                to="/tenant?action=report-repair"
                 className="inline-flex items-center justify-center rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white px-4 py-2.5 font-medium shadow transition-colors focus:outline-none focus:ring-2 focus:ring-emerald-400 focus:ring-offset-2 focus:ring-offset-slate-900"
               >
-                Tenant
+                Tenant: Report a repair
               </Link>
               <Link
-                to="/operative"
-                className="inline-flex items-center justify-center rounded-lg bg-indigo-600 hover:bg-indigo-500 text-white px-4 py-2.5 font-medium shadow transition-colors focus:outline-none focus:ring-2 focus:ring-indigo-400 focus:ring-offset-2 focus:ring-offset-slate-900"
+                to="/tenant?action=moving-out"
+                className="inline-flex items-center justify-center rounded-lg bg-amber-600 hover:bg-amber-500 text-white px-4 py-2.5 font-medium shadow transition-colors focus:outline-none focus:ring-2 focus:ring-amber-400 focus:ring-offset-2 focus:ring-offset-slate-900"
               >
-                Operative
+                Tenant: Moving out
               </Link>
+              <Link
+                to="/tenant?action=other"
+                className="inline-flex items-center justify-center rounded-lg bg-sky-600 hover:bg-sky-500 text-white px-4 py-2.5 font-medium shadow transition-colors focus:outline-none focus:ring-2 focus:ring-sky-400 focus:ring-offset-2 focus:ring-offset-slate-900"
+              >
+                Tenant: Other
+              </Link>
+            </div>
+            <div className="mt-6 border-t border-slate-800 pt-6">
+              <h3 className="text-sm uppercase tracking-wide text-slate-400 mb-3">Staff</h3>
+              <div className="flex flex-col sm:flex-row gap-3">
+                <Link
+                  to="/operative"
+                  className="inline-flex items-center justify-center rounded-lg bg-indigo-600 hover:bg-indigo-500 text-white px-4 py-2.5 font-medium shadow transition-colors focus:outline-none focus:ring-2 focus:ring-indigo-400 focus:ring-offset-2 focus:ring-offset-slate-900"
+                >
+                  Operative work logging
+                </Link>
+              </div>
             </div>
             <p className="text-xs text-slate-400 mt-3">Admin-only quick adds are now handled in the backend.</p>
           </div>
