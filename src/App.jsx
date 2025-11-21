@@ -1,6 +1,6 @@
 import { Link } from 'react-router-dom'
 import Hero from './components/Hero'
-import Dashboard from './components/Dashboard'
+import FrontChatbot from './components/FrontChatbot'
 
 function App() {
   return (
@@ -11,27 +11,33 @@ function App() {
         <div className="max-w-7xl mx-auto px-6 lg:px-8">
           <div className="bg-slate-900/60 backdrop-blur border border-slate-800 rounded-2xl p-6 shadow-xl">
             <h2 className="text-xl font-semibold mb-2">What would you like to do today?</h2>
-            <p className="text-slate-300 mb-5">Choose an option below.</p>
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+            <p className="text-slate-300 mb-5">Choose an option below or chat with us.</p>
+
+            {/* Tenant chatbot on the front page */}
+            <FrontChatbot />
+
+            {/* Tenant quick actions (labels simplified; remove the word "Tenant") */}
+            <div className="mt-6 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
               <Link
                 to="/tenant?action=report-repair"
                 className="inline-flex items-center justify-center rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white px-4 py-2.5 font-medium shadow transition-colors focus:outline-none focus:ring-2 focus:ring-emerald-400 focus:ring-offset-2 focus:ring-offset-slate-900"
               >
-                Tenant: Report a repair
+                Report a repair
               </Link>
               <Link
                 to="/tenant?action=moving-out"
                 className="inline-flex items-center justify-center rounded-lg bg-amber-600 hover:bg-amber-500 text-white px-4 py-2.5 font-medium shadow transition-colors focus:outline-none focus:ring-2 focus:ring-amber-400 focus:ring-offset-2 focus:ring-offset-slate-900"
               >
-                Tenant: Moving out
+                Moving out
               </Link>
               <Link
                 to="/tenant?action=other"
                 className="inline-flex items-center justify-center rounded-lg bg-sky-600 hover:bg-sky-500 text-white px-4 py-2.5 font-medium shadow transition-colors focus:outline-none focus:ring-2 focus:ring-sky-400 focus:ring-offset-2 focus:ring-offset-slate-900"
               >
-                Tenant: Other
+                Other enquiry
               </Link>
             </div>
+
             <div className="mt-6 border-t border-slate-800 pt-6">
               <h3 className="text-sm uppercase tracking-wide text-slate-400 mb-3">Staff</h3>
               <div className="flex flex-col sm:flex-row gap-3">
@@ -43,11 +49,12 @@ function App() {
                 </Link>
               </div>
             </div>
-            <p className="text-xs text-slate-400 mt-3">Admin-only quick adds are now handled in the backend.</p>
+            <p className="text-xs text-slate-400 mt-3">For tenant enquiries, email customerservices@glenroe.co.uk</p>
           </div>
         </div>
 
-        <Dashboard />
+        {/* Remove the lower half properties dashboard from the front page as requested */}
+        {/* Intentionally omitted <Dashboard /> to focus on backend reporting entry points */}
       </main>
 
       <footer className="border-t border-slate-800 mt-10">

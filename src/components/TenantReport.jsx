@@ -207,7 +207,7 @@ export default function TenantReport() {
           )}
           {intent !== 'report-repair' && (
             <div className="mt-4 text-sm text-slate-300">
-              <p className="mb-2">Email: <a className="text-sky-400 hover:underline" href={`mailto:support@glenroeliving.com?subject=${encodeURIComponent('Tenant enquiry: ' + intent)}&body=${encodeURIComponent(summary)}`}>support@glenroeliving.com</a></p>
+              <p className="mb-2">Email: <a className="text-sky-400 hover:underline" href={`mailto:customerservices@glenroe.co.uk?subject=${encodeURIComponent('Tenant enquiry: ' + intent)}&body=${encodeURIComponent(summary)}`}>customerservices@glenroe.co.uk</a></p>
               <p>Or paste your summary into your usual chat with us.</p>
             </div>
           )}
