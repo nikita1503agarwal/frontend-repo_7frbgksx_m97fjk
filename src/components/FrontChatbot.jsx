@@ -20,6 +20,10 @@ export default function FrontChatbot() {
     priority: '', // low | medium | high | urgent
   })
 
+  // Flow control for confirmation
+  const [awaitingConfirm, setAwaitingConfirm] = useState(false)
+  const [summaryShown, setSummaryShown] = useState(false)
+
   const email = 'customerservices@glenroe.co.uk'
 
   const scrollToEnd = () => {
@@ -75,6 +79,29 @@ export default function FrontChatbot() {
     return ''
   }
 
+  const buildSummary = () => {
+    const name = prefill.name || '—'
+    const contact = prefill.contact || '—'
+    const address = prefill.address || '—'
+    const details = prefill.details || '—'
+    const priority = prefill.priority || '—'
+
+    if (intent === 'report-repair') {
+      return `Summary of your repair request: • Address: ${address} • Issue: ${details} • Priority: ${priority} • Name: ${name} • Contact: ${contact}. Is everything correct? (yes/no)`
+    }
+    if (intent === 'moving-out') {
+      return `Summary of your moving-out notice: • Name: ${name} • Contact: ${contact} • Address: ${address} • Details: ${details}. Is everything correct? (yes/no)`
+    }
+    return `Summary of your message: • Name: ${name} • Contact: ${contact} • Details: ${details}. Is everything correct? (yes/no)`
+  }
+
+  const showSummaryAndAsk = () => {
+    if (summaryShown) return
+    addMessage('assistant', buildSummary())
+    setAwaitingConfirm(true)
+    setSummaryShown(true)
+  }
+
   const proposeContinue = () => {
     if (intent === 'report-repair') {
       addMessage('assistant', 'Thanks, I can open the repair form with your details pre-filled. Tap “Open repair form”.')
@@ -86,9 +113,32 @@ export default function FrontChatbot() {
   }
 
   const handleUserText = (text) => {
+    const t = text.trim()
+
+    // Handle confirmation step first if active
+    if (awaitingConfirm) {
+      const ans = t.toLowerCase()
+      setAwaitingConfirm(false)
+      if (ans === 'yes' || ans === 'y' || /correct|looks good|confirm/.test(ans)) {
+        if (intent === 'report-repair') {
+          addMessage('assistant', 'Thanks for confirming. I will email this to Customer Services now. They will be in touch to make an appointment for an engineer.')
+        } else if (intent === 'moving-out') {
+          addMessage('assistant', 'Thanks for confirming. I will email this to Customer Services and they will be in touch to confirm next steps.')
+        } else {
+          addMessage('assistant', 'Thanks for confirming. I will email this to Customer Services and they will get back to you.')
+        }
+        proposeContinue()
+        return
+      }
+      // If not confirmed, ask what to change
+      addMessage('assistant', 'No problem. What would you like to change? You can retype any field such as address, issue details, priority, name, or contact.')
+      setSummaryShown(false)
+      return
+    }
+
     // If intent is unknown, detect and ask the next question
     if (!intent) {
-      const i = detectIntent(text)
+      const i = detectIntent(t)
       setIntent(i)
       if (i === 'report-repair') {
         addMessage('assistant', 'Great — a repair. I will ask a few quick questions to help triage.')
@@ -107,7 +157,6 @@ export default function FrontChatbot() {
     }
 
     // If intent is set, fill fields progressively in order of the next question
-    const t = text.trim()
     if (intent === 'report-repair') {
       if (!prefill.address) return setAndAsk({ address: t }, nextRepairQuestion({ ...prefill, address: t }))
       if (!prefill.details) {
@@ -119,8 +168,14 @@ export default function FrontChatbot() {
         return setAndAsk({ priority: pr }, nextRepairQuestion({ ...prefill, priority: pr }))
       }
       if (!prefill.name) return setAndAsk({ name: t }, nextRepairQuestion({ ...prefill, name: t }))
-      if (!prefill.contact) return setAndAsk({ contact: t }, '')
-      proposeContinue()
+      if (!prefill.contact) {
+        setAndAsk({ contact: t }, '')
+        // All info gathered — show summary and confirmation step
+        showSummaryAndAsk()
+        return
+      }
+      // Already complete — ensure summary is shown at least once
+      showSummaryAndAsk()
       return
     }
 
@@ -128,16 +183,24 @@ export default function FrontChatbot() {
       if (!prefill.name) return setAndAsk({ name: t }, nextMoveOutQuestion({ ...prefill, name: t }))
       if (!prefill.contact) return setAndAsk({ contact: t }, nextMoveOutQuestion({ ...prefill, contact: t }))
       if (!prefill.address) return setAndAsk({ address: t }, nextMoveOutQuestion({ ...prefill, address: t }))
-      if (!prefill.details) return setAndAsk({ details: t }, '')
-      proposeContinue()
+      if (!prefill.details) {
+        setAndAsk({ details: t }, '')
+        showSummaryAndAsk()
+        return
+      }
+      showSummaryAndAsk()
       return
     }
 
     if (intent === 'other') {
       if (!prefill.name) return setAndAsk({ name: t }, nextOtherQuestion({ ...prefill, name: t }))
       if (!prefill.contact) return setAndAsk({ contact: t }, nextOtherQuestion({ ...prefill, contact: t }))
-      if (!prefill.details) return setAndAsk({ details: t }, '')
-      proposeContinue()
+      if (!prefill.details) {
+        setAndAsk({ details: t }, '')
+        showSummaryAndAsk()
+        return
+      }
+      showSummaryAndAsk()
       return
     }
   }
@@ -224,7 +287,7 @@ export default function FrontChatbot() {
           className="flex-1 bg-white text-slate-900 placeholder-slate-500 text-[16px] leading-6 px-3 py-2 rounded-md border border-slate-300 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
           value={input}
           onChange={(e) => setInput(e.target.value)}
-          placeholder="Type a message..."
+          placeholder={awaitingConfirm ? 'Type yes to confirm or no to edit…' : 'Type a message...'}
         />
         <button type="submit" className="bg-indigo-600 hover:bg-indigo-500 text-white px-4 py-2 rounded-md">Send</button>
       </form>
